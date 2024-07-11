@@ -23,11 +23,32 @@ public class UserServiceImpl implements Userservice {
     @Autowired
     private RestTemplate restTemplate;
 
+    private static final String RATING_SERVICE_URL = "http://RATINGSERVICE/ratings";
+    private static final String HOTEL_SERVICE_URL = "http://HOTELSERVICE/hotels";
     @Override
     public User saveUser(User user) {
-        User saveuser = userRepository.save(user);
-        System.out.println("saved User in service:-" + saveuser);
-        return saveuser;
+        // Save the user locally
+        User savedUser = userRepository.save(user);
+
+        // Save ratings
+        user.getRatings().forEach(rating -> {
+            // Save the hotel first and retrieve the hotelId
+            Hotel hotel = rating.getHotel();
+            Hotel savedHotel = restTemplate.postForObject(HOTEL_SERVICE_URL, hotel, Hotel.class);
+
+            // Set the hotelId in the rating
+            rating.setHotelId(savedHotel.getId());
+            rating.setUserId(savedUser.getUserId());
+
+            // Save the rating
+            restTemplate.postForObject(RATING_SERVICE_URL, rating, Rating.class);
+        });
+
+        System.out.println("saved User in service:-" + savedUser);
+        return savedUser;
+
+//        User saveuser = userRepository.save(user);
+//        return user;
     }
 
     @Override

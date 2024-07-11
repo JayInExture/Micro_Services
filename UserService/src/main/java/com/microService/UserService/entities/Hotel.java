@@ -16,4 +16,13 @@ public class Hotel {
     private  String location;
     private  String about;
 
+    @Override
+    public String toString() {
+        return "Hotel{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", location='" + location + '\'' +
+                ", about='" + about + '\'' +
+                '}';
+    }
 }
