@@ -1,0 +1,42 @@
+server:
+  port: 7777
+spring:
+  application:
+    name: API-GATEWAY
+
+
+
+  cloud:
+    gateway:
+      routes:
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+
+#          uri: http://localhost:8082
+          predicates:
+            - Path=/users/**
+
+        - id: HOTELSERVICE
+          uri: lb://HOTELSERVICE
+          predicates:
+            - Path=/hotels/**
+
+        - id: RATINGSERVICE
+          uri: lb://RATINGSERVICE
+          predicates:
+            - Path=/ratings/**
+
+  config:
+    import: optional:configserver:http://localhost:8071
+#      server:
+#        git:
+#          uri: https://github.com/JayInExture/microservices_demo-_config_server
+#          clone-on-start: true
+#eureka:
+#  instance:
+#    prefer-ip-address: true
+#  client:
+#    fetch-registry: true
+#    register-with-eureka: true
+#    service-url:
+#      defaultZone: http://localhost:8888/eureka
