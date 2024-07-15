@@ -21,6 +21,7 @@ public class UserController {
 
 //    Save User
     @PostMapping("/CreateUser")
+    @CrossOrigin(origins = "http://localhost:7777")
     public ResponseEntity<User> createUser (@RequestBody User user){
         System.out.println("user rating and hotels"+user);
         User Saveduser = userservice.saveUser(user);

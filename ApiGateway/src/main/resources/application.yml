@@ -14,7 +14,7 @@ spring:
 
 #          uri: http://localhost:8082
           predicates:
-            - Path=/users/**
+            - Path=/users/**,/
 
         - id: HOTELSERVICE
           uri: lb://HOTELSERVICE
@@ -28,6 +28,19 @@ spring:
 
   config:
     import: optional:configserver:http://localhost:8071
+
+
+#okta configuration for api gateway
+
+okta:
+  oauth2:
+    issuer: https://dev-04812936.okta.com/oauth2/default
+    audience: api://default
+    client-id: 0oaiarml7lkU3YK9r5d7
+    client-secret: -SVca3UNbNerayQ7BF1UArbK6VHw325ClRXvoiJIeeojduT9bAVrfUCTjdXKetC3
+    scopes: openid, profile, email, offline_access
+
+
 #      server:
 #        git:
 #          uri: https://github.com/JayInExture/microservices_demo-_config_server
