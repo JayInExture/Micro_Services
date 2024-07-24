@@ -2,6 +2,8 @@ server:
   port: 8082
 
 spring:
+
+
   application:
     name: User-SERVICE
   datasource:
@@ -20,14 +22,19 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-#eureka:
-#  instance:
-#    prefer-ip-address: true
-#  client:
-#    fetch-registry: true
-#    register-with-eureka: true
-#    service-url:
-#      defaultZone: http://localhost:8888/eureka
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: group_id
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+
 management:
   health:
     circuitbreakers:
@@ -57,10 +64,52 @@ resilience4j:
         slidingWindowSize: 10
         slidingWindowType: COUNT_BASED
 
+logging:
+  file:
+    name: "E:/JAVA MicroServices/UserService/logs/User_MicroserviceLogs.log"
+#  ratelimiter:
+#    instances:
+#      userRateLimiter:
+#        limit-refresh-period: 4s
+#        limit-for-period: 2
+#        timeout-duration: 2s
 
-  ratelimiter:
-    instances:
-      userRateLimiter:
-        limit-refresh-period: 4s
-        limit-for-period: 2
-        timeout-duration: 2s
+#bucket4j:
+#  enable: true
+#  filters[0]:
+#    cache-name: buckets
+#    http-response-body: {\"status\": 429, \"error\": \"To many Requests.", \"message\": \"You don't have any Api Call now\"}
+#    url: .*
+#    rate-limits[0]:
+#      bandwidth[0]:
+#        capacity: 1
+#        time: 1
+#        unit: seconds
+#        fixed-refill-interval: 0
+#        fixed-refill-interval-unit:
+
+#bucket4j:
+#  enabled: true
+#  filters:
+#    - cache-name: rate-limit-buckets
+#      url: /.*
+#      strategy: first
+#      http-response-body: "{ \"status\": 429, \"error\": \"Too Many Requests\", \"message\": \"You have exhausted your API Request Quota\" }"
+#      rate-limits:
+#        - cache-key: "getHeader('X-api-key')"
+#          execute-condition: "getHeader('X-api-key').startsWith('PX001-')"
+#          bandwidths:
+#            - capacity: 10
+#              time: 1
+#              unit: minutes
+#        - cache-key: "getHeader('X-api-key')"
+#          execute-condition: "getHeader('X-api-key').startsWith('BX001-')"
+#          bandwidths:
+#            - capacity: 5
+#              time: 1
+#              unit: minutes
+#        - cache-key: "getHeader('X-api-key')"
+#          bandwidths:
+#            - capacity: 1
+#              time: 1
+#              unit: seconds

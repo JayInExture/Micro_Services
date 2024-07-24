@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Getter
@@ -23,7 +25,8 @@ public class Hotel {
     private  String name;
     private  String location;
     private  String about;
-
+    @Transient
+    private List<Rating> ratings=new ArrayList<>();
     @Override
     public String toString() {
         return "Hotel{" +

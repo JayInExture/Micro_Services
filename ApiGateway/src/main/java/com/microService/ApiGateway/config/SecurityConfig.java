@@ -15,6 +15,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity httpSecurity) {
 
         httpSecurity
+                .csrf(csrf -> csrf .disable())
                 .authorizeExchange(exchanges -> exchanges
                         .anyExchange().authenticated()
                 )

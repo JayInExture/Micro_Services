@@ -2,11 +2,13 @@ package com.microService.UserService.controllers;
 
 import com.microService.UserService.entities.User;
 import com.microService.UserService.services.Userservice;
+import io.github.bucket4j.Bucket;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +21,12 @@ public class UserController {
     private Userservice userservice;
 
 
+    @Autowired
+    private Bucket bucket;
+
+
 //    Save User
+    @Transactional
     @PostMapping("/CreateUser")
     @CrossOrigin(origins = "http://localhost:7777")
     public ResponseEntity<User> createUser (@RequestBody User user){
@@ -30,24 +37,33 @@ public class UserController {
     }
 
     @GetMapping("/getUser/{userId}")
-    @CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
-    @RateLimiter(name = "userRateLimiter", fallbackMethod = "ratingHotelFallback")
-    public ResponseEntity<User> getSingleUser(@PathVariable int userId){
-       User user = userservice.getUser(userId);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<User> getSingleUser(@PathVariable int userId) {
+        if (bucket.tryConsume(1)) {
+            User user = userservice.getUser(userId);
+            return ResponseEntity.ok(user);
+        } else {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+        }
     }
-
-    public ResponseEntity<User> ratingHotelFallback(int userId, Exception ex) {
-        ex.printStackTrace();
-
-        User user = new User();
-        user.setEmail("dummy@gmail.com");
-        user.setName("Dummy");
-        user.setAbout("This user is created dummy because some service is down");
-        user.setUserId(141234);
-
-        return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
-    }
+//    @GetMapping("/getUser/{userId}")
+//    @CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
+////    @RateLimiter(name = "userRateLimiter", fallbackMethod = "ratingHotelFallback")
+//    public ResponseEntity<User> getSingleUser(@PathVariable int userId){
+//       User user = userservice.getUser(userId);
+//        return ResponseEntity.ok(user);
+//    }
+//
+//    public ResponseEntity<User> ratingHotelFallback(int userId, Exception ex) {
+//        ex.printStackTrace();
+//
+//        User user = new User();
+//        user.setEmail("dummy@gmail.com");
+//        user.setName("Dummy");
+//        user.setAbout("This user is created dummy because some service is down");
+//        user.setUserId(141234);
+//
+//        return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
+//    }
 
 
     //get all user

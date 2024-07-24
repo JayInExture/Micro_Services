@@ -1,11 +1,14 @@
 package com.microService.UserService.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microService.UserService.entities.Hotel;
 import com.microService.UserService.entities.Rating;
 import com.microService.UserService.entities.User;
 import com.microService.UserService.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,26 +26,69 @@ public class UserServiceImpl implements Userservice {
     @Autowired
     private RestTemplate restTemplate;
 
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+
+    private static final String RATING_TOPIC = "rating_topic";
+    private static final String HOTEL_TOPIC = "hotel_topic";
+
     private static final String RATING_SERVICE_URL = "http://RATINGSERVICE/ratings";
     private static final String HOTEL_SERVICE_URL = "http://HOTELSERVICE/hotels";
+
+
+
     @Override
     public User saveUser(User user) {
-        // Save the user locally
+
         User savedUser = userRepository.save(user);
 
         // Save ratings
-        user.getRatings().forEach(rating -> {
-            // Save the hotel first and retrieve the hotelId
-            Hotel hotel = rating.getHotel();
-            Hotel savedHotel = restTemplate.postForObject(HOTEL_SERVICE_URL, hotel, Hotel.class);
+//        user.getRatings().forEach(rating -> {
+//            // Save the hotel first and retrieve the hotelId
+//            Hotel hotel = rating.getHotel();
+//            Hotel savedHotel = restTemplate.postForObject(HOTEL_SERVICE_URL, hotel, Hotel.class);
+//
+//            // Set the hotelId in the rating
+//            rating.setHotelId(savedHotel.getId());
+//            rating.setUserId(savedUser.getUserId());
+//
+//            // Save the rating
+//            restTemplate.postForObject(RATING_SERVICE_URL, rating, Rating.class);
+//        });
 
-            // Set the hotelId in the rating
-            rating.setHotelId(savedHotel.getId());
-            rating.setUserId(savedUser.getUserId());
+//        Kafka......
 
-            // Save the rating
-            restTemplate.postForObject(RATING_SERVICE_URL, rating, Rating.class);
+        user.getRatings().forEach(hotel -> {
+            hotel.setUserId(savedUser.getUserId());
+
+            // Serialize the Rating object to JSON
+            String hotelJson = serializeToJson(hotel);
+
+            // Send the serialized Rating to Kafka
+            kafkaTemplate.send(HOTEL_TOPIC, hotelJson);
         });
+//        user.getRatings().forEach(rating -> {
+//
+//            rating.setUserId(savedUser.getUserId());
+//
+//
+//            Hotel hotel = rating.getHotel();
+//            Hotel savedHotel = restTemplate.postForObject(HOTEL_SERVICE_URL, hotel, Hotel.class);
+//
+//
+//            rating.setHotelId(savedHotel.getId());
+//
+////            if (rating.getHotel() != null) {
+////                String hotelJson = serializeToJson(rating.getHotel());
+////                kafkaTemplate.send(HOTEL_TOPIC, hotelJson);
+////            }
+//
+//
+////            String ratingJson = serializeToJson(rating);
+////            kafkaTemplate.send(RATING_TOPIC, ratingJson);
+//        });
 
         System.out.println("saved User in service:-" + savedUser);
         return savedUser;
@@ -50,7 +96,13 @@ public class UserServiceImpl implements Userservice {
 //        User saveuser = userRepository.save(user);
 //        return user;
     }
-
+    private String serializeToJson(Object object) {
+        try {
+            return new ObjectMapper().writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error serializing object to JSON: " + e.getMessage());
+        }
+    }
     @Override
     public List<User> getAllUser() {
         List<User> Alluser = userRepository.findAll();
@@ -79,8 +131,8 @@ public class UserServiceImpl implements Userservice {
 
             ResponseEntity<Hotel> forEntity = restTemplate.getForEntity("http://HOTELSERVICE/hotels/"+rating.getHotelId(), Hotel.class);
 
-                Hotel hotel = forEntity.getBody();
-                rating.setHotel(hotel);
+            Hotel hotel = forEntity.getBody();
+            rating.setHotel(hotel);
             return rating;
         }).collect(Collectors.toList());
         user.setRatings(ratings);

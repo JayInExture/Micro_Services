@@ -16,11 +16,21 @@ spring:
   config:
     import: optional:configserver:http://localhost:8071
 
-#eureka:
-#  instance:
-#    prefer-ip-address: true
-#  client:
-#    fetch-registry: true
-#    register-with-eureka: true
-#    service-url:
-#      defaultZone: http://localhost:8888/eureka
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: hotel-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+
+
+
+logging:
+  file:
+    name: "E:/JAVA MicroServices/HotelService/logs/Hotel_MicroserviceLogs.log"
